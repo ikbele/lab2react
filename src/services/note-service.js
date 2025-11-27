@@ -4,94 +4,39 @@ import { listDocuments } from "./database-service";
 import client from "./appwrite-config";
 import { Databases, ID } from "appwrite";
 import { APPWRITE_DATABASE_ID, APPWRITE_COLLECTION_ID } from "@env";
+import { appwriteDatabase } from "./appwriteConfig";
+import { Query } from "appwrite";
 
-const databases = new Databases(client);
-
-// Get all notes, potentially filtered by userId
-export const getNotes = async (userId = null) => {
+export const getNotes = async (userId) => {
   try {
-    // Create query array - initially empty
-    const queries = [];
+    const response = await appwriteDatabase.listDocuments(
+      process.env.EXPO_PUBLIC_DATABASE_ID,
+      process.env.EXPO_PUBLIC_COLLECTION_ID,
+      [Query.equal("user_id", userId)] // Filter by user_id
+    );
 
-    // If userId is provided, add a filter to only get notes for that user
-    if (userId) {
-      queries.push(Query.equal("userId", userId));
-    }
-
-    // Add sorting by createdAt in descending order (newest first)
-    queries.push(Query.orderDesc("createdAt"));
-
-    // Use the listDocuments function from database-service
-    const notes = await listDocuments(queries);
-    return notes;
+    return response.documents;
   } catch (error) {
-    console.error("Error getting notes:", error);
-    throw error;
+    console.error("Error fetching notes:", error);
+    return [];
   }
 };
 
-// Create a new note
-export const createNote = async (data) => {
+export const addNote = async (text, userId) => {
   try {
-    // Add timestamps to the note data
-    const noteData = {
-      ...data,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    // Create a document in the database
-    const response = await databases.createDocument(
-      "6926385b000759e8b0c0",
-      "notes",
-      ID.unique(), // Generate a unique ID
-      noteData
+    const response = await appwriteDatabase.createDocument(
+      process.env.EXPO_PUBLIC_DATABASE_ID,
+      process.env.EXPO_PUBLIC_COLLECTION_ID,
+      "unique()",
+      {
+        text,
+        user_id: userId, // Add user ID to the note
+      }
     );
 
     return response;
   } catch (error) {
-    console.error("Error creating note:", error);
-    throw error;
-  }
-};
-
-// Delete a note by ID
-export const deleteNote = async (noteId) => {
-  try {
-    // Delete the document with the specified ID
-    await databases.deleteDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_COLLECTION_ID,
-      noteId
-    );
-
-    return true;
-  } catch (error) {
-    console.error("Error deleting note:", error);
-    throw error;
-  }
-};
-
-// Update an existing note
-export const updateNote = async (noteId, data) => {
-  try {
-    // Add updated timestamp
-    const noteData = {
-      ...data,
-      updatedAt: new Date().toISOString(),
-    };
-
-    // Update the document in the database
-    const response = await databases.updateDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_COLLECTION_ID,
-      noteId,
-      noteData
-    );
-
-    return response;
-  } catch (error) {
-    console.error("Error updating note:", error);
+    console.error("Error adding note:", error);
     throw error;
   }
 };

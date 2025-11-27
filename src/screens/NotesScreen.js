@@ -5,73 +5,82 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
-import { getNotes } from "../services/note-service";
+import {
+  getNotes,
+  addNote,
+  deleteNote,
+  updateNote,
+} from "../services/noteService";
 import NoteItem from "../components/NoteItem";
 import AddNoteModal from "../components/AddNoteModal";
+import { AuthContext } from "../context/AuthContext";
 
 const NotesScreen = () => {
   const [notes, setNotes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useContext(AuthContext); // Get the current user from context
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
-
-  // Function to fetch notes from the database
   const fetchNotes = async () => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      const fetchedNotes = await getNotes();
+      // Pass the user ID when fetching notes
+      const fetchedNotes = await getNotes(user.$id);
       setNotes(fetchedNotes);
-    } catch (err) {
-      console.error("Error fetching notes:", err);
-      setError("Failed to load notes. Please try again.");
+    } catch (error) {
+      console.error("Failed to fetch notes:", error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  // Add the new note to the state and avoid refetching
-  const handleNoteAdded = (newNote) => {
-    setNotes((currentNotes) => [newNote, ...currentNotes]);
+  useEffect(() => {
+    if (user) {
+      fetchNotes();
+    }
+  }, [user]);
+
+  const handleAddNote = async (text) => {
+    try {
+      // Pass the user ID when adding a note
+      const newNote = await addNote(text, user.$id);
+      setNotes([newNote, ...notes]);
+      setIsAddModalVisible(false);
+    } catch (error) {
+      console.error("Failed to add note:", error);
+    }
   };
 
-  const handleNoteDeleted = (noteId) => {
-    setNotes((currentNotes) =>
-      currentNotes.filter((note) => note.$id !== noteId)
-    );
-  };
-  const handleNoteUpdated = (updatedNote) => {
-    setNotes((currentNotes) =>
-      currentNotes.map((note) =>
-        note.$id === updatedNote.$id ? updatedNote : note
-      )
-    );
+  const handleDeleteNote = async (noteId) => {
+    try {
+      await deleteNote(noteId);
+      setNotes(notes.filter((note) => note.$id !== noteId));
+    } catch (error) {
+      console.error("Failed to delete note:", error);
+    }
   };
 
-
-  // Show loading indicator while fetching data
-  if (loading && notes.length === 0) {
+  const handleUpdateNote = async (noteId, newText) => {
+    try {
+      const updatedNote = await updateNote(noteId, newText);
+      setNotes(notes.map((note) => (note.$id === noteId ? updatedNote : note)));
+    } catch (error) {
+      console.error("Failed to update note:", error);
+    }
+  };
+  const renderEmptyComponent = () => {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0000ff" />
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>You don't have any notes yet.</Text>
+        <Text style={styles.emptySubtext}>
+          Tap the + button to create your first note!
+        </Text>
       </View>
     );
-  }
-
-  // Show error message if there was a problem
-  if (error && notes.length === 0) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
-    );
-  }
+  };
+  
 
   // Render the list of notes
   return (
@@ -96,6 +105,9 @@ const NotesScreen = () => {
             onNoteUpdated={handleNoteUpdated}
           />
         )}
+        keyExtractor={(item) => item.$id}
+        contentContainerStyle={notes.length === 0 ? { flex: 1 } : {}}
+        ListEmptyComponent={!isLoading && renderEmptyComponent()}
         contentContainerStyle={styles.listContent}
         refreshing={loading}
         onRefresh={fetchNotes}
@@ -106,6 +118,11 @@ const NotesScreen = () => {
         onClose={() => setModalVisible(false)}
         onNoteAdded={handleNoteAdded}
       />
+      {isLoading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      )}
     </View>
   );
 };
@@ -148,6 +165,22 @@ const styles = StyleSheet.create({
   errorText: {
     color: "red",
     fontSize: 16,
+    textAlign: "center",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  emptySubtext: {
+    fontSize: 16,
+    color: "#666",
     textAlign: "center",
   },
 });

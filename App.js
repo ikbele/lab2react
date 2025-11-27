@@ -38,39 +38,80 @@
 //   },
 // });
 // App.js
+// import React from "react";
+// import { NavigationContainer } from "@react-navigation/native";
+// import { createStackNavigator } from "@react-navigation/stack";
+// import HomeScreen from "./src/screens/HomeScreen";
+// import NotesScreen from "./src/screens/NotesScreen";
+// import LayoutDemo from "./LayoutDemo";
+
+
+// const Stack = createStackNavigator();
+
+// export default function App() {
+//   return (
+//     <NavigationContainer>
+//       <Stack.Navigator initialRouteName="Home">
+//         <Stack.Screen
+//           name="Home"
+//           component={HomeScreen}
+//           options={{
+//             title: "Notes App",
+//             headerStyle: {
+//               backgroundColor: "#f4511e",
+//             },
+//             headerTintColor: "#fff",
+//           }}
+//         />
+//         <Stack.Screen
+//           name="Notes"
+//           component={NotesScreen}
+//           options={{
+//             title: "My Notes",
+//           }}
+//         />
+//       </Stack.Navigator>
+//     </NavigationContainer>
+//   )
+// }
+
+// // App.js
+// import React from "react";
+// import { NavigationContainer } from "@react-navigation/native";
+// import { createNativeStackNavigator } from "@react-navigation/native-stack";
+// import { AuthProvider } from "./src/contexts/AuthContext";
+// import HomeScreen from "./src/screens/HomeScreen";
+// import NotesScreen from "./src/screens/NotesScreen";
+// import AuthScreen from "./src/screens/AuthScreen";
+// // Import other screens as needed
+
+// const Stack = createNativeStackNavigator();
+
+// export default function App() {
+//   return (
+//     <AuthProvider>
+//       <NavigationContainer>
+//         <Stack.Navigator>
+//           <Stack.Screen name="Auth" component={AuthScreen} />
+//           <Stack.Screen name="Home" component={HomeScreen} />
+//           <Stack.Screen name="Notes" component={NotesScreen} />
+//           {/* Add other screens here */}
+//         </Stack.Navigator>
+//       </NavigationContainer>
+//     </AuthProvider>
+//   );
+// }
+
+
+// App.js
 import React from "react";
-import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
-import HomeScreen from "./src/screens/HomeScreen";
-import NotesScreen from "./src/screens/NotesScreen";
-import LayoutDemo from "./LayoutDemo";
-
-
-const Stack = createStackNavigator();
+import { AuthProvider } from "./src/contexts/AuthContext";
+import AuthNavigator from "./src/navigation/AuthNavigator";
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{
-            title: "Notes App",
-            headerStyle: {
-              backgroundColor: "#f4511e",
-            },
-            headerTintColor: "#fff",
-          }}
-        />
-        <Stack.Screen
-          name="Notes"
-          component={NotesScreen}
-          options={{
-            title: "My Notes",
-          }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
-  )
+    <AuthProvider>
+      <AuthNavigator />
+    </AuthProvider>
+  );
 }
